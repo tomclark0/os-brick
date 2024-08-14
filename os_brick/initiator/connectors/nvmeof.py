@@ -861,14 +861,19 @@ class NVMeOFConnector(base.BaseLinuxConnector):
                 except Exception:
                     time.sleep(1)
 
-            try:
-                is_exist = os.path.exists(device_path)
-                LOG.debug("[!] is_exist = %s", is_exist)
-                if is_exist:
-                    NVMeOFConnector.remove_raid(executor, device_path)
-                    os.remove(device_path)
-            except Exception:
-                LOG.debug('[!] Exception_stop_raid!')
+            for retry in range(10):
+                try:
+                    is_exist = os.path.exists(device_path)
+                    LOG.debug("[!] end_raid is_exist = %s", is_exist)
+                    if is_exist:
+                        NVMeOFConnector.remove_raid(executor, device_path)
+                        os.remove(device_path)
+                        if retry > 0:
+                            LOG.debug(f"[!] end_raid remove_raid - Success on retry {retry + 1}")
+                        break
+                except Exception:
+                    LOG.debug('[!] Exception_stop_raid!')
+                time.sleep(1)
 
     @staticmethod
     def stop_raid(executor, md_path, raise_exception=False):
